@@ -236,10 +236,9 @@ EOF
       exit 1
     fi
 
-    # 启动服务并查看日志
-    echo "启动服务并查看日志..."
+    # 启动服务
+    echo "启动服务..."
     sudo systemctl start symphonyd
-    sudo journalctl -u symphonyd -f -o cat
 
     echo "所有操作已完成。"
     read -n 1 -s -r -p "按任意键返回主菜单..."
