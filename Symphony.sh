@@ -73,25 +73,31 @@ function install_and_start() {
     apt-get install -y libssl-dev
 
     # 检查是否已安装 Go
-    if ! command -v go &> /dev/null
-    then
-        echo "Go 未安装，正在安装 Go..."
+if ! command -v go &> /dev/null
+then
+    echo "Go 未安装，正在安装 Go..."
 
-        # 安装 Go
-        cd $HOME
-        ver="1.21.3"
-        wget https://mirrors.tuna.tsinghua.edu.cn/golang/go1.21.3.linux-amd64.tar.gz
-        sudo rm -rf /usr/local/go
-        sudo tar -C /usr/local -xzf "go1.21.3.linux-amd64.tar.gz"
-        rm "go1.21.3.linux-amd64.tar.gz"
-        echo "export PATH=\$PATH:/usr/local/go/bin:$HOME/go/bin" >> $HOME/.bash_profile
-        source $HOME/.bash_profile
+    # 安装 Go
+    cd $HOME
+    VER="1.22.3"
+    wget "https://golang.org/dl/go$VER.linux-amd64.tar.gz"
+    sudo rm -rf /usr/local/go
+    sudo tar -C /usr/local -xzf "go$VER.linux-amd64.tar.gz"
+    rm "go$VER.linux-amd64.tar.gz"
 
-        # 验证 Go 安装
-        go version
-    else
-        echo "Go 已安装"
-    fi
+    # 更新环境变量
+    [ ! -f ~/.bash_profile ] && touch ~/.bash_profile
+    echo "export PATH=$PATH:/usr/local/go/bin:~/go/bin" >> ~/.bash_profile
+    source ~/.bash_profile
+
+    # 创建目录
+    [ ! -d ~/go/bin ] && mkdir -p ~/go/bin
+
+    # 验证 Go 安装
+    go version
+else
+    echo "Go 已安装"
+fi
 
     # 设置 Symphony 环境变量
     echo "设置 Symphony 环境变量..."
