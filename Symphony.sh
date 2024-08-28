@@ -105,7 +105,16 @@ function install_and_start() {
     git clone https://github.com/Orchestra-Labs/symphony
     cd symphony
     git checkout v0.3.0
+    
+    # 确保构建目录存在
+    mkdir -p build
+
+    # 构建项目
     make build
+    if [ ! -f $HOME/symphony/build/symphonyd ]; then
+        echo "构建失败，找不到 symphonyd 文件。"
+        exit 1
+    fi
 
     # 创建目录并移动文件
     echo "创建目录并移动文件..."
