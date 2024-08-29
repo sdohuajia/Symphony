@@ -176,10 +176,10 @@ EOF
 
     # 初始化 symphonyd
     echo "初始化 symphonyd..."
-    symphonyd config chain-id symphony-testnet-2
+    symphonyd config chain-id symphony-testnet-3
     symphonyd config keyring-backend test
     symphonyd config node tcp://localhost:${SYMPHONY_PORT}657
-    symphonyd init "RPCdot" --chain-id symphony-testnet-2
+    symphonyd init "RPCdot" --chain-id symphony-testnet-3
 
     # 下载配置文件
     echo "下载配置文件..."
@@ -257,7 +257,7 @@ function delegate() {
     echo "开始委托..."
     read -p "请输入委托金额 (例如: 100000note): " amount
     symphonyd tx staking delegate $(symphonyd keys show wallet-name --bech val -a) $amount \
-    --chain-id symphony-testnet-2 \
+    --chain-id symphony-testnet-3 \
     --from "wallet-name" \
     --fees "800note" \
     --node=http://localhost:${SYMPHONY_PORT}657 \
