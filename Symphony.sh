@@ -24,8 +24,9 @@ function main_menu() {
         echo "2) 委托"
         echo "3) 删除节点"
         echo "4) 查看日志"
-        echo "5) 退出"
-        read -p "请输入选项 [1-5]: " choice
+        echo "5) 下载快照"
+        echo "6) 退出"
+        read -p "请输入选项 [1-6]: " choice
         
         case $choice in
             1)
@@ -41,6 +42,9 @@ function main_menu() {
                 view_logs
                 ;;
             5)
+                download_snapshot
+                ;;
+            6)
                 echo "退出脚本..."
                 exit 0
                 ;;
@@ -280,6 +284,39 @@ function view_logs() {
     echo "查看日志..."
     journalctl -u symphonyd -f -o cat
 
+    read -n 1 -s -r -p "按任意键返回主菜单..."
+}
+
+# 下载快照功能函数
+function download_snapshot() {
+    echo "安装 lz4..."
+    sudo apt update && sudo apt install -y lz4
+
+    echo "下载快照..."
+    wget -O symphony_450827.tar.lz4 https://snapshots.polkachu.com/testnet-snapshots/symphony/symphony_450827.tar.lz4 --inet4-only
+
+    echo "停止节点..."
+    sudo service symphony stop
+
+    echo "备份数据..."
+    cp ~/.symphonyd/data/priv_validator_state.json ~/.symphonyd/priv_validator_state.json
+
+    echo "重置节点状态..."
+    symphonyd tendermint unsafe-reset-all --home $HOME/.symphonyd --keep-addr-book
+
+    echo "恢复快照..."
+    lz4 -dc symphony_450827.tar.lz4 | tar -xf - -C $HOME/.symphonyd
+
+    echo "启动节点..."
+    sudo service symphony start
+
+    echo "删除下载的快照文件..."
+    rm -v symphony_450827.tar.lz4
+
+    echo "确保您的节点正在运行..."
+    sudo service symphony status
+    sudo journalctl -u symphony -f
+    
     read -n 1 -s -r -p "按任意键返回主菜单..."
 }
 
