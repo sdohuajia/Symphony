@@ -329,7 +329,7 @@ function check_sync_status() {
     echo "查看同步状态..."
 
     # RPC 服务器地址
-    RPC_URL="https://symphony-testnet-rpc.polkachu.com:443"
+    RPC_URL="https://warden-testnet-rpc.cryptonode.id"
 
     # 获取状态信息
     status=$(curl -s "$RPC_URL/status")
