@@ -25,8 +25,9 @@ function main_menu() {
         echo "3) 删除节点"
         echo "4) 查看日志"
         echo "5) 下载快照"
-        echo "6) 退出"
-        read -p "请输入选项 [1-6]: " choice
+        echo "6) 查看同步状态"  # 新增选项
+        echo "7) 退出"  # 更新退出选项
+        read -p "请输入选项 [1-7]: " choice
         
         case $choice in
             1)
@@ -45,6 +46,9 @@ function main_menu() {
                 download_snapshot
                 ;;
             6)
+                check_sync_status  # 调用新的函数
+                ;;
+            7)
                 echo "退出脚本..."
                 exit 0
                 ;;
@@ -317,6 +321,41 @@ function download_snapshot() {
     sudo service symphony status
     sudo journalctl -u symphony -f
     
+    read -n 1 -s -r -p "按任意键返回主菜单..."
+}
+
+# 新增查看同步状态的函数
+function check_sync_status() {
+    echo "查看同步状态..."
+
+    # RPC 服务器地址
+    RPC_URL="https://symphony-testnet-rpc.polkachu.com:443"
+
+    # 获取状态信息
+    status=$(curl -s "$RPC_URL/status")
+
+    # 打印完整的状态信息
+    echo "$status"
+
+    # 提取信息并格式化输出
+    echo "=== 同步状态信息 ==="
+
+    # 最新区块高度
+    latest_block_height=$(echo "$status" | jq -r '.result.sync_info.latest_block_height')
+    echo "最新区块高度: $latest_block_height"
+
+    # 最新区块时间
+    latest_block_time=$(echo "$status" | jq -r '.result.sync_info.latest_block_time')
+    echo "最新区块时间: $latest_block_time"
+
+    # 是否在同步中
+    catching_up=$(echo "$status" | jq -r '.result.sync_info.catching_up')
+    if [ "$catching_up" = "true" ]; then
+        echo "节点正在同步中..."
+    else
+        echo "节点已完全同步。"
+    fi
+
     read -n 1 -s -r -p "按任意键返回主菜单..."
 }
 
