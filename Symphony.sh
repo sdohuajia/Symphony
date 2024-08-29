@@ -81,31 +81,31 @@ function install_and_start() {
     apt-get install -y libssl-dev
 
     # 检查是否已安装 Go
-if ! command -v go &> /dev/null
-then
-    echo "Go 未安装，正在安装 Go..."
+    if ! command -v go &> /dev/null
+    then
+        echo "Go 未安装，正在安装 Go..."
 
-    # 安装 Go
-    cd $HOME
-    VER="1.22.3"
-    wget "https://golang.org/dl/go$VER.linux-amd64.tar.gz"
-    sudo rm -rf /usr/local/go
-    sudo tar -C /usr/local -xzf "go$VER.linux-amd64.tar.gz"
-    rm "go$VER.linux-amd64.tar.gz"
+        # 安装 Go
+        cd $HOME
+        VER="1.22.3"
+        wget "https://golang.org/dl/go$VER.linux-amd64.tar.gz"
+        sudo rm -rf /usr/local/go
+        sudo tar -C /usr/local -xzf "go$VER.linux-amd64.tar.gz"
+        rm "go$VER.linux-amd64.tar.gz"
 
-    # 更新环境变量
-    [ ! -f ~/.bash_profile ] && touch ~/.bash_profile
-    echo "export PATH=$PATH:/usr/local/go/bin:~/go/bin" >> ~/.bash_profile
-    source ~/.bash_profile
+        # 更新环境变量
+        [ ! -f ~/.bash_profile ] && touch ~/.bash_profile
+        echo "export PATH=$PATH:/usr/local/go/bin:~/go/bin" >> ~/.bash_profile
+        source ~/.bash_profile
 
-    # 创建目录
-    [ ! -d ~/go/bin ] && mkdir -p ~/go/bin
+        # 创建目录
+        [ ! -d ~/go/bin ] && mkdir -p ~/go/bin
 
-    # 验证 Go 安装
-    go version
-else
-    echo "Go 已安装"
-fi
+        # 验证 Go 安装
+        go version
+    else
+        echo "Go 已安装"
+    fi
 
     # 设置 Symphony 环境变量
     echo "设置 Symphony 环境变量..."
@@ -293,43 +293,47 @@ function view_logs() {
 
 # 下载快照功能函数
 function download_snapshot() {
-    echo "安装 lz4..."
-    sudo apt update && sudo apt install -y lz4
+    echo "下载快照功能函数..."
+    DAEMON_HOME=$HOME/.symphonyd
+    SERVICE_NAME=symphonyd
+    NETWORK=symphony-testnet
 
+    # 停止服务
+    echo "停止服务..."
+    sudo systemctl stop ${SERVICE_NAME}
+
+    # 备份现有的 priv_validator_state.json 文件
+    echo "备份现有的 priv_validator_state.json 文件..."
+    cp ${DAEMON_HOME}/data/priv_validator_state.json ${DAEMON_HOME}/priv_validator_state.json.backup
+
+    # 清空数据目录并重新创建
+    echo "清空数据目录并重新创建..."
+    rm -rf ${DAEMON_HOME}/data
+    mkdir -p ${DAEMON_HOME}/data
+
+    # 下载并解压快照
     echo "下载快照..."
-    wget -O symphony_450827.tar.lz4 https://snapshots.polkachu.com/testnet-snapshots/symphony/symphony_450827.tar.lz4 --inet4-only
+    SNAP_NAME=$(curl -s https://snapshot.cryptonode.id/${NETWORK}/ | egrep -o ">${NETWORK}-snapshot.*\.tar.lz4" | tr -d ">")
+    curl https://snapshot.cryptonode.id/${NETWORK}/${SNAP_NAME} | lz4 -dc - | tar -xf - -C ${DAEMON_HOME}/data
 
-    echo "停止节点..."
-    sudo service symphony stop
+    # 恢复备份的 priv_validator_state.json 文件
+    echo "恢复备份的 priv_validator_state.json 文件..."
+    mv ${DAEMON_HOME}/priv_validator_state.json.backup ${DAEMON_HOME}/data/priv_validator_state.json
 
-    echo "备份数据..."
-    cp ~/.symphonyd/data/priv_validator_state.json ~/.symphonyd/priv_validator_state.json
+    # 重启服务并查看日志
+    echo "重启服务..."
+    sudo systemctl restart ${SERVICE_NAME}
 
-    echo "重置节点状态..."
-    symphonyd tendermint unsafe-reset-all --home $HOME/.symphonyd --keep-addr-book
-
-    echo "恢复快照..."
-    lz4 -dc symphony_450827.tar.lz4 | tar -xf - -C $HOME/.symphonyd
-
-    echo "启动节点..."
-    sudo service symphony start
-
-    echo "删除下载的快照文件..."
-    rm -v symphony_450827.tar.lz4
-
-    echo "确保您的节点正在运行..."
-    sudo service symphony status
-    sudo journalctl -u symphony -f
-    
+    # 等待用户输入返回主菜单
     read -n 1 -s -r -p "按任意键返回主菜单..."
 }
 
-# 新增查看同步状态的函数
+# 查看同步状态功能函数
 function check_sync_status() {
     echo "查看同步状态..."
 
     # RPC 服务器地址
-    RPC_URL="https://warden-testnet-rpc.cryptonode.id"
+    RPC_URL="https://symphony-testnet-rpc.cryptonode.id"
 
     # 获取状态信息
     status=$(curl -s "$RPC_URL/status")
