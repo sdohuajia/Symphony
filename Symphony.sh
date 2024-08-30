@@ -205,8 +205,8 @@ EOF
 
     # 配置 peers 和 seeds
     echo "配置 peers 和 seeds..."
-    SEEDS="ade4d8bc8cbe014af6ebdf3cb7b1e9ad36f412c0@testnet-seeds.polkachu.com:29156"
-    PEERS="bbf8ef70a32c3248a30ab10b2bff399e73c6e03c@65.21.198.100:24856,f3c40275b0e198bef1c79111a04d0fed572a44da@94.72.100.234:45656,710976805e0c3069662e63b9f244db68654e2f15@65.109.93.124:29256,5660a533218eed9dbbc569f38e6bc44666b1eb17@65.21.10.105:26656,77ce4b0a96b3c3d6eb2beb755f9f6f573c1b4912@178.18.251.146:22656"
+    SEEDS="10838131d11f546751178df1e1045597aad6366d@34.41.169.77:26656"
+    PEERS="eea2dc7e9abfd18787d4cc2c728689ad658cd3a2@34.66.161.223:26656"
     sed -i -e "s/^seeds *=.*/seeds = \"$SEEDS\"/; s/^persistent_peers *=.*/persistent_peers = \"$PEERS\"/" $HOME/.symphonyd/config/config.toml
 
     # 配置 pruning 设置
@@ -254,14 +254,24 @@ EOF
 
 # 委托功能函数
 function delegate() {
-    echo "开始委托..."
+    echo "开始创建验证者..."
     read -p "请输入委托金额 (例如: 100000note): " amount
-    symphonyd tx staking delegate $(symphonyd keys show wallet-name --bech val -a) $amount \
-    --chain-id symphony-testnet-3 \
-    --from "wallet-name" \
-    --fees "800note" \
-    --node=http://localhost:${SYMPHONY_PORT}657 \
-    -y
+    symphonyd tx staking create-validator \
+      --amount "$amount" \
+      --pubkey $(symphonyd tendermint show-validator) \
+      --moniker "myvalidator" \
+      --identity "optional identity signature (ex. UPort or Keybase)" \
+      --details "RPCdot.com 🐦" \
+      --website "validator's (optional) website" \
+      --chain-id symphony-testnet-3 \
+      --commission-rate "0.05" \
+      --commission-max-rate "0.2" \
+      --commission-max-change-rate "0.01" \
+      --min-self-delegation "1" \
+      --fees "800note" \
+      --from wallet-name \
+      --node=http://localhost:${SYMPHONY_PORT}657 \
+      -y
 
     read -n 1 -s -r -p "按任意键返回主菜单..."
 }
