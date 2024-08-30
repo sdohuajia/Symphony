@@ -21,34 +21,38 @@ function main_menu() {
         echo "退出脚本，请按键盘 ctrl + C 退出即可"
         echo "请选择要执行的操作:"
         echo "1) 安装并启动 Symphony 节点"
-        echo "2) 委托"
-        echo "3) 删除节点"
-        echo "4) 查看日志"
-        echo "5) 下载快照"
-        echo "6) 查看同步状态"  # 新增选项
-        echo "7) 退出"  # 更新退出选项
-        read -p "请输入选项 [1-7]: " choice
+        echo "2) 创建验证者"  # 创建验证者选项
+        echo "3) 委托"  # 委托选项
+        echo "4) 删除节点"  # 删除节点选项
+        echo "5) 查看日志"  # 查看日志选项
+        echo "6) 下载快照"  # 下载快照选项
+        echo "7) 查看同步状态"  # 查看同步状态选项
+        echo "8) 退出"  # 退出选项
+        read -p "请输入选项 [1-8]: " choice
         
         case $choice in
             1)
                 install_and_start
                 ;;
             2)
-                delegate
+                create_validator  # 调用创建验证者函数
                 ;;
             3)
-                remove_node
+                delegate
                 ;;
             4)
-                view_logs
+                remove_node
                 ;;
             5)
-                download_snapshot
+                view_logs
                 ;;
             6)
-                check_sync_status  # 调用新的函数
+                download_snapshot
                 ;;
             7)
+                check_sync_status
+                ;;
+            8)
                 echo "退出脚本..."
                 exit 0
                 ;;
@@ -254,8 +258,22 @@ EOF
 
 # 委托功能函数
 function delegate() {
-    echo "开始创建验证者..."
+    echo "开始委托..."
     read -p "请输入委托金额 (例如: 100000note): " amount
+    symphonyd tx staking delegate $(symphonyd keys show wallet-name --bech val -a) $amount \
+    --chain-id symphony-testnet-3 \
+    --from "wallet-name" \
+    --fees "800note" \
+    --node=http://localhost:${SYMPHONY_PORT}657 \
+    -y
+
+    read -n 1 -s -r -p "按任意键返回主菜单..."
+}
+
+# 创建验证者功能函数
+function create_validator() {
+    echo "开始创建验证者..."
+    read -p "请输入委托金额 (例如: 90000note): " amount
     symphonyd tx staking create-validator \
       --amount "$amount" \
       --pubkey $(symphonyd tendermint show-validator) \
