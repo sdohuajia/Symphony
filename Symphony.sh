@@ -331,13 +331,16 @@ function download_snapshot() {
     sudo service symphony stop
 
     echo "备份数据..."
-    cp ~/.symphonyd/data/priv_validator_state.json ~/.symphonyd/priv_validator_state.json
+    cp ~/.symphonyd/data/priv_validator_state.json ~/.symphonyd/priv_validator_state.json.backup
 
     echo "重置节点状态..."
     symphonyd tendermint unsafe-reset-all --home $HOME/.symphonyd --keep-addr-book
 
     echo "恢复快照..."
     lz4 -dc symphony_450827.tar.lz4 | tar -xf - -C $HOME/.symphonyd
+
+    echo "恢复验证器状态文件..."
+    cp ~/.symphonyd/priv_validator_state.json.backup ~/.symphonyd/data/priv_validator_state.json
 
     echo "启动节点..."
     sudo service symphony start
