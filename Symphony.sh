@@ -357,7 +357,7 @@ function check_sync_status() {
     echo "查看同步状态..."
 
     # RPC 服务器地址
-    RPC_URL="https://symphony.test.rpc.nodeshub.online:29156"
+    RPC_URL="https://symphony.test.rpc.nodeshub.online"
 
     # 获取状态信息
     status=$(curl -s "$RPC_URL/status")
