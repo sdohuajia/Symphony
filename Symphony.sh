@@ -354,7 +354,26 @@ function download_snapshot() {
 
 # 查看同步状态的函数
 function check_sync_status() {
-    local RPC_URL="http://localhost:26657"  # 本地 RPC 服务器的地址
+    local CONFIG_FILE="/root/.symphonyd/config/config.toml"
+    
+    # 从 config.toml 中提取端口号
+    echo "提取端口号..."
+    local PORT
+    PORT=$(sed -n 's/.*laddr = "tcp:\/\/127.0.0.1:\([0-9]*\)".*/\1/p' "$CONFIG_FILE")
+
+    # 打印提取的端口号
+    echo "提取的端口号: $PORT"
+    
+    # 检查端口号是否提取成功
+    if [ -z "$PORT" ]; then
+        echo "无法从配置文件中提取端口号。"
+        read -n 1 -s -r -p "按任意键返回主菜单..."
+        return 1
+    fi
+    
+    # 构造 RPC URL
+    local RPC_URL="http://localhost:${PORT}"
+    
     echo "查看同步状态..."
 
     # 获取状态信息
@@ -364,18 +383,16 @@ function check_sync_status() {
     # 检查 curl 命令是否成功执行
     if [ $? -ne 0 ]; then
         echo "无法连接到本地 RPC 服务器。"
+        read -n 1 -s -r -p "按任意键返回主菜单..."
         return 1
     fi
 
     # 检查 JSON 数据是否有效
     if ! echo "$status" | jq . > /dev/null 2>&1; then
         echo "无法解析 JSON 数据。"
+        read -n 1 -s -r -p "按任意键返回主菜单..."
         return 1
     fi
-
-    # 获取本地区块高度
-    local local_block_height
-    local_block_height=$(curl -s "$RPC_URL/status" | jq -r '.result.sync_info.latest_block_height')
 
     # 提取信息并格式化输出
     echo "=== 同步状态信息 ==="
@@ -391,7 +408,7 @@ function check_sync_status() {
     echo "最新区块时间: $latest_block_time"
 
     # 本地区块高度
-    echo "本地区块高度: $local_block_height"
+    echo "本地区块高度: $latest_block_height"
 
     # 是否在同步中
     local catching_up
