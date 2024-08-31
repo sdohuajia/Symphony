@@ -319,7 +319,7 @@ function view_logs() {
     read -n 1 -s -r -p "按任意键返回主菜单..."
 }
 
-# 下载快照功能函数
+# 下载并恢复快照功能函数
 function download_snapshot() {
     echo "安装 lz4..."
     sudo apt update && sudo apt install -y lz4
@@ -328,19 +328,19 @@ function download_snapshot() {
     sudo systemctl stop symphonyd
 
     echo "备份数据..."
-    cp ~/.symphonyd/data/priv_validator_state.json ~/.symphonyd/priv_validator_state.json.backup
+    sudo cp /root/.symphonyd/data/priv_validator_state.json /root/.symphonyd/priv_validator_state.json.backup
 
     echo "重置节点状态..."
-    symphonyd tendermint unsafe-reset-all --home $HOME/.symphonyd --keep-addr-book
+    symphonyd tendermint unsafe-reset-all --home /root/.symphonyd --keep-addr-book
 
     echo "下载并恢复快照..."
-    curl -s https://files.nodeshub.online/testnet/symphony/snapshot/symphony_snap.tar.lz4 | lz4 -dc - | tar -xf - -C $HOME/.symphonyd
+    curl -# https://files.nodeshub.online/testnet/symphony/snapshot/symphony_snap.tar.lz4 | lz4 -dc - | tar -xf - -C /root/.symphonyd
 
     echo "下载并更新 addrbook.json..."
-    wget -O $HOME/.symphonyd/config/addrbook.json https://files.nodeshub.online/testnet/symphony/addrbook.json
+    wget --no-cache -O /root/.symphonyd/config/addrbook.json https://files.nodeshub.online/testnet/symphony/addrbook.json
 
     echo "恢复验证器状态文件..."
-    cp ~/.symphonyd/priv_validator_state.json.backup ~/.symphonyd/data/priv_validator_state.json
+    sudo cp /root/.symphonyd/priv_validator_state.json.backup /root/.symphonyd/data/priv_validator_state.json
 
     echo "启动节点..."
     sudo systemctl start symphonyd
