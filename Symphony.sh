@@ -352,31 +352,49 @@ function download_snapshot() {
     read -n 1 -s -r -p "按任意键返回主菜单..."
 }
 
-# 新增查看同步状态的函数
+# 查看同步状态的函数
 function check_sync_status() {
+    local RPC_URL="http://localhost:26657"  # 本地 RPC 服务器的地址
     echo "查看同步状态..."
 
-    # RPC 服务器地址
-    RPC_URL="https://symphony.test.rpc.nodeshub.online"
-
     # 获取状态信息
+    local status
     status=$(curl -s "$RPC_URL/status")
 
-    # 打印完整的状态信息
-    echo "$status"
+    # 检查 curl 命令是否成功执行
+    if [ $? -ne 0 ]; then
+        echo "无法连接到本地 RPC 服务器。"
+        return 1
+    fi
+
+    # 检查 JSON 数据是否有效
+    if ! echo "$status" | jq . > /dev/null 2>&1; then
+        echo "无法解析 JSON 数据。"
+        return 1
+    fi
+
+    # 获取本地区块高度
+    local local_block_height
+    local_block_height=$(curl -s "$RPC_URL/status" | jq -r '.result.sync_info.latest_block_height')
 
     # 提取信息并格式化输出
     echo "=== 同步状态信息 ==="
 
     # 最新区块高度
+    local latest_block_height
     latest_block_height=$(echo "$status" | jq -r '.result.sync_info.latest_block_height')
     echo "最新区块高度: $latest_block_height"
 
     # 最新区块时间
+    local latest_block_time
     latest_block_time=$(echo "$status" | jq -r '.result.sync_info.latest_block_time')
     echo "最新区块时间: $latest_block_time"
 
+    # 本地区块高度
+    echo "本地区块高度: $local_block_height"
+
     # 是否在同步中
+    local catching_up
     catching_up=$(echo "$status" | jq -r '.result.sync_info.catching_up')
     if [ "$catching_up" = "true" ]; then
         echo "节点正在同步中..."
