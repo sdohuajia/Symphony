@@ -324,11 +324,8 @@ function download_snapshot() {
     echo "安装 lz4..."
     sudo apt update && sudo apt install -y lz4
 
-    echo "下载快照..."
-    wget -O symphony_450827.tar.lz4 https://snapshots.polkachu.com/testnet-snapshots/symphony/symphony_450827.tar.lz4 --inet4-only
-
     echo "停止节点..."
-    sudo service symphony stop
+    sudo systemctl stop symphonyd
 
     echo "备份数据..."
     cp ~/.symphonyd/data/priv_validator_state.json ~/.symphonyd/priv_validator_state.json.backup
@@ -336,21 +333,21 @@ function download_snapshot() {
     echo "重置节点状态..."
     symphonyd tendermint unsafe-reset-all --home $HOME/.symphonyd --keep-addr-book
 
-    echo "恢复快照..."
-    lz4 -dc symphony_450827.tar.lz4 | tar -xf - -C $HOME/.symphonyd
+    echo "下载并恢复快照..."
+    curl -s https://files.nodeshub.online/testnet/symphony/snapshot/symphony_snap.tar.lz4 | lz4 -dc - | tar -xf - -C $HOME/.symphonyd
+
+    echo "下载并更新 addrbook.json..."
+    wget -O $HOME/.symphonyd/config/addrbook.json https://files.nodeshub.online/testnet/symphony/addrbook.json
 
     echo "恢复验证器状态文件..."
     cp ~/.symphonyd/priv_validator_state.json.backup ~/.symphonyd/data/priv_validator_state.json
 
     echo "启动节点..."
-    sudo service symphony start
-
-    echo "删除下载的快照文件..."
-    rm -v symphony_450827.tar.lz4
+    sudo systemctl start symphonyd
 
     echo "确保您的节点正在运行..."
-    sudo service symphony status
-    sudo journalctl -u symphony -f
+    sudo systemctl status symphonyd
+    sudo journalctl -u symphonyd -f
     
     read -n 1 -s -r -p "按任意键返回主菜单..."
 }
